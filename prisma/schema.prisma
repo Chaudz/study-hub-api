@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "commonjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               Int                    @id @default(autoincrement())
+  name             String
+  email            String                 @unique
+  password         String
+  avatar           String?
+  xp               Int                    @default(0)
+  streak_days      Int                    @default(0)
+  created_at       DateTime               @default(now())
+  username         String                 @unique
+  chatRooms        ChatRoom[]
+  studyLogs        StudyLog[]
+  exerciseProgress UserExerciseProgress[]
+  lessonProgress   UserLessonProgress[]
+  xpLogs           XpLog[]
+}
+
+model Subject {
+  id          Int      @id @default(autoincrement())
+  name        String
+  icon        String?
+  color       String?
+  order_index Int?
+  created_at  DateTime @default(now())
+  lessons     Lesson[]
+  tutors      Tutor[]
+}
+
+model Lesson {
+  id          Int                  @id @default(autoincrement())
+  subject_id  Int
+  title       String
+  description String?
+  order_index Int?
+  created_at  DateTime             @default(now())
+  exercises   Exercise[]
+  subject     Subject              @relation(fields: [subject_id], references: [id])
+  progress    UserLessonProgress[]
+}
+
+model Exercise {
+  id         Int                    @id @default(autoincrement())
+  lesson_id  Int
+  title      String
+  content    String?
+  type       String?
+  difficulty String?
+  solution   String?
+  created_at DateTime               @default(now())
+  lesson     Lesson                 @relation(fields: [lesson_id], references: [id])
+  options    ExerciseOption[]
+  progress   UserExerciseProgress[]
+}
+
+model ExerciseOption {
+  id          Int      @id @default(autoincrement())
+  exercise_id Int
+  content     String?
+  is_correct  Boolean  @default(false)
+  exercise    Exercise @relation(fields: [exercise_id], references: [id])
+}
+
+model UserExerciseProgress {
+  id           Int       @id @default(autoincrement())
+  user_id      Int
+  exercise_id  Int
+  status       String?
+  score        Int?
+  completed_at DateTime?
+  exercise     Exercise  @relation(fields: [exercise_id], references: [id])
+  user         User      @relation(fields: [user_id], references: [id])
+}
+
+model UserLessonProgress {
+  id                  Int    @id @default(autoincrement())
+  user_id             Int
+  lesson_id           Int
+  completed_exercises Int?
+  total_exercises     Int?
+  progress_percent    Int?
+  lesson              Lesson @relation(fields: [lesson_id], references: [id])
+  user                User   @relation(fields: [user_id], references: [id])
+}
+
+model Tutor {
+  id         Int        @id @default(autoincrement())
+  name       String
+  avatar     String?
+  rating     Float?
+  subject_id Int
+  is_online  Boolean    @default(false)
+  created_at DateTime   @default(now())
+  chatRooms  ChatRoom[]
+  subject    Subject    @relation(fields: [subject_id], references: [id])
+}
+
+model ChatRoom {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  tutor_id   Int
+  created_at DateTime  @default(now())
+  tutor      Tutor     @relation(fields: [tutor_id], references: [id])
+  user       User      @relation(fields: [user_id], references: [id])
+  messages   Message[]
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  room_id     Int
+  sender_type String?
+  sender_id   Int?
+  content     String?
+  created_at  DateTime @default(now())
+  room        ChatRoom @relation(fields: [room_id], references: [id])
+}
+
+model XpLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  xp         Int
+  reason     String?
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id])
+}
+
+model StudyLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  study_date DateTime
+  user       User     @relation(fields: [user_id], references: [id])
+}
